@@ -12,6 +12,7 @@ Driven by a quest to navigate the data analyst job market more effectively, this
 3. What skills are most in demand for data analysts?
 4. Which skills are associated with higher salaries
 5. What are the most optimal skills to learn?
+6. What skills do marketing-focused data analyst roles require, and how do they pay?
 
 # Tools I used
 For my deep dive into the data analyst job market, I harnessed the power of several key tools:
@@ -20,6 +21,7 @@ For my deep dive into the data analyst job market, I harnessed the power of seve
 - **PostgreSQL**: The chosen database management system, ideal for handling the job posting data.
 - **Visual Studio Code**: My go-to for database management and executing SQL queries.
 - **Git & Github**: Essential for version control and sharing my SQL scripts and analysis, ensuring collaboration and project tracking.
+- **Power BI**: Used to visualize query results, turning top-paying jobs and in-demand skills into clear bar charts.
 
 # The Analysis
 Each query for this project aimed at investigating specific aspects of the data analyst job market.
@@ -91,7 +93,7 @@ ORDER BY
 Here is the breakdown of the most demanded skills for the top 10 highest paying data analyst jobs in 2023:
 - **SQL** is leading with a bold count of 8
 - **Python** follows closely with a bold count of 7
-- **Tableau** is also highly sought after, with   .Other skills like **R**, **Snowflake**, **Pandas**, and **Excel** show varying degrees of demand.
+- **Tableau** is also highly sought after, with a bold count of 6. Other skills like **R**, **Snowflake**, **Pandas**, and **Excel** show varying degrees of demand.
 
 ![Top Paying Job Skills](assets/2_top_paying_job_skills.png)
 *Bar graph visualizing the count of skills for the top 10 paying jobs for data analysts; Ussing Power BI to generate this graph from my SQL query results*
@@ -263,9 +265,75 @@ LIMIT 25;
 
 Here's a breakdown of the most optimal skills for Data Analysts in 2023:
 - **High-Demand Programming Languages**: Python and R stand out for their high demand, with demand counts for 236 and 148 respectively. Despite their high demand, their average salaries are around $101,397 for Python and $100,499 for R, indicating that proficiency in these languages is highly valued but also widely available.
-- **Cloud Tools and Technologies**: Skills in specialized technologies such as Snowflake, Azure, AWS, and BigQuery show significant demand with relatively high average salaries, pointing towards the growing importance of cloud platforms and big data technologies in data analysis.
+- **Cloud Tools and Technologies**: Skills in specialized technologies such as Snowflake, Azure, AWS, and Go show significant demand with relatively high average salaries, pointing towards the growing importance of cloud platforms and big data technologies in data analysis.
 - **Business Intelligence and Visualization Tools**: Tableau and Looker, with demand counts of 230 and 49 respectively, and average salaries around $99,288 and $103,795, highlight the critical role of data visualization and business intelligence in deriving actionable insights from data.
-- **Database Technologies**: The demand for skills in traditional and NoSQL databases (Oracle, SQL Server, NoSQL) with average salaaries ranging from $97,786 to $104,534, reflects the enduring need for data storage, retrieval, and management expertise.
+- **Database Technologies**: The demand for skills in traditional and Oracle, SQL Server with average salaaries ranging from $97,786 to $104,534, reflects the enduring need for data storage, retrieval, and management expertise.
+
+### 6. Marketing-Focused Data Analyst Roles
+To connect this analysis to my interest in marketing, I filtered data analyst postings with "marketing" in the job title, comparing their salaries against other data analyst roles and identifying the skills these positions require.
+
+```sql
+SELECT
+    CASE 
+        WHEN job_title ILIKE '%marketing%' THEN 'Marketing'
+        ELSE 'Other'
+    END AS role_group,
+    COUNT(*) AS postings,
+    ROUND(AVG(salary_year_avg), 0) AS avg_salary
+FROM
+    job_postings_fact
+WHERE
+    job_title_short = 'Data Analyst' AND
+    salary_year_avg IS NOT NULL
+GROUP BY
+    role_group;
+```
+
+| Role Group | Postings (with salary) | Average Salary ($) |
+|------------|-----------------------:|-------------------:|
+| Marketing  | 100                    | 97,340             |
+| Other      | 5,363                  | 93,811             |
+
+*Table comparing the average salary of marketing-focused data analyst roles with other data analyst roles*
+
+```sql
+SELECT
+    skills_dim.skills,
+    COUNT(skills_job_dim.job_id) AS demand_count,
+    ROUND(AVG(job_postings_fact.salary_year_avg), 0) AS avg_salary
+FROM job_postings_fact
+INNER JOIN skills_job_dim ON job_postings_fact.job_id = skills_job_dim.job_id
+INNER JOIN skills_dim ON skills_job_dim.skill_id = skills_dim.skill_id
+WHERE
+    job_postings_fact.job_title_short = 'Data Analyst' AND
+    job_postings_fact.job_title ILIKE '%marketing%'
+GROUP BY skills_dim.skills
+ORDER BY demand_count DESC
+LIMIT 10;
+```
+Here's the breakdown of marketing-focused data analyst roles in 2023:
+- **Slightly Higher Pay**: Marketing-focused analysts average $97,340, about $3,500 more than other data analyst roles ($93,811), though this is based on a smaller sample of 100 postings with listed salaries.
+- **Same Core Toolkit**: SQL, Excel, Tableau, Python, and Power BI remain the top five skills, showing that the foundation for marketing analysts is the same as for data analysts overall.
+- **Reporting Takes Priority**: Tableau ranks above Python, and Looker makes the top 10 with the highest average salary ($105,223), reflecting a stronger focus on dashboards and performance reporting in marketing teams.
+- **Communication Is Part of the Job**: PowerPoint appears in the top 10, highlighting the need to present insights to stakeholders, though it carries the lowest average salary ($76,500).
+
+![Top Marketing Analyst Skills](assets/6_marketing_analyst_skills.png)
+*Bar graph visualizing the top 10 skills for marketing-focused data analyst roles; Using Power BI to generate this graph from my SQL query results*
+
+| Skills     | Demand Count | Average Salary ($) |
+|------------|-------------:|-------------------:|
+| SQL        | 1,838        | 99,922             |
+| Excel      | 1,400        | 89,587             |
+| Tableau    | 1,268        | 102,271            |
+| Python     | 965          | 98,177             |
+| Power BI   | 808          | 93,535             |
+| R          | 595          | 103,567            |
+| SAS        | 414          | 83,167             |
+| Looker     | 350          | 105,223            |
+| PowerPoint | 318          | 76,500             |
+| Word       | 195          | 93,170             |
+
+*Table of the demand and average salary for the top 10 skills in marketing-focused data analyst postings (all locations)*
 
 # What I learned
 
@@ -285,10 +353,11 @@ From the analysis, several general insights emerged:
 3. **Most In-Demand Skills**: SQL is also the most demanded skill in the data analyst job market (7,291 postings), followed by Excel and Python, making it essential for job seekers.
 4. **Skills with Higher Salaries**: Specialized skills such as PySpark ($208K) and Bitbucket ($189K) are associated with the highest average salaries, indicating a premium on big data and engineering expertise.
 5. **Optimal Skills for Job Market Value**: SQL leads in demand (398 postings) with a solid average salary of $97K, making it the most essential skill to learn first. Cloud and big data tools like Snowflake, Azure, and AWS pay more ($108K+) and are worth adding next.
+6.  **Marketing-Focused Analyst Roles**: Data analyst roles in marketing pay slightly more ($97K vs. $94K) and rely on the same core skills, with a stronger emphasis on reporting tools like Tableau and Looker.
 
 ### Closing Thoughts
 This project sharpened my SQL skills, from multi-table joins to CTEs and aggregations, and gave me my first hands-on experience building visuals in Power BI.
 
 The takeaway is clear: SQL is the foundation. It tops both overall demand and the skill lists of the highest-paying roles. From there, cloud and big data tools like Snowflake, Azure, and PySpark are where the salary premium starts.
 
-For my own job search, this gives me a roadmap: strengthen SQL and Python first, then add one cloud platform to stand out.
+For my own job search, this gives me a roadmap: strengthen SQL and Python first, build reporting skills in Tableau and Power BI for marketing-focused roles, then add one cloud platform to stand out.
